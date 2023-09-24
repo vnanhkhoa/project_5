@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
 import android.provider.Settings
+import android.util.Log
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
@@ -71,13 +72,13 @@ class RepresentativeFragment : Fragment(), AdapterView.OnItemSelectedListener {
                 viewModel.updateAddress(it)
             }
 
-            (BundleCompat.getParcelableArray(
+            BundleCompat.getParcelableArrayList(
                 this,
                 REPRESENTATIVE_KEY,
                 Representative::class.java
-            ) as? Array<*>)?.let {
+            )?.let {
                 @Suppress("UNCHECKED_CAST")
-                viewModel.updateRepresentatives(it.toList() as List<Representative>)
+                viewModel.updateRepresentatives(it as List<Representative>)
             }
 
         }
@@ -114,7 +115,10 @@ class RepresentativeFragment : Fragment(), AdapterView.OnItemSelectedListener {
             state.onItemSelectedListener = this@RepresentativeFragment
 
             savedInstanceState?.run {
-                representativeLayout.setTransition(getInt(MOTION_LAYOUT_KEY))
+                val stateMonitor = getInt(MOTION_LAYOUT_KEY,-1)
+                if (stateMonitor != -1) {
+                    representativeLayout.transitionToState(stateMonitor)
+                }
                 BundleCompat.getParcelable(this, RECYCLER_VIEW_KEY, Parcelable::class.java)?.let {
                     rvRepresentative.layoutManager?.onRestoreInstanceState(it)
                 }
@@ -158,8 +162,30 @@ class RepresentativeFragment : Fragment(), AdapterView.OnItemSelectedListener {
                 }
             }
         }
+    }
 
+    override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        viewModel.updateState(parent?.getItemAtPosition(position).toString())
+    }
 
+    override fun onNothingSelected(parent: AdapterView<*>?) {
+        // Don't something
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.run {
+            putParcelable(ADDRESS_KEY, viewModel.address.value)
+            putParcelableArrayList(
+                REPRESENTATIVE_KEY,
+                viewModel.representatives.value as ArrayList<out Parcelable>
+            )
+            outState.putInt(MOTION_LAYOUT_KEY, binding.representativeLayout.currentState)
+            outState.putParcelable(
+                RECYCLER_VIEW_KEY,
+                binding.rvRepresentative.layoutManager?.onSaveInstanceState()
+            )
+        }
     }
 
     private fun isPermissionGranted(): Boolean {
@@ -219,11 +245,4 @@ class RepresentativeFragment : Fragment(), AdapterView.OnItemSelectedListener {
 
     }
 
-    override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-        viewModel.updateState(parent?.getItemAtPosition(position).toString())
-    }
-
-    override fun onNothingSelected(parent: AdapterView<*>?) {
-        // Don't something
-    }
 }
