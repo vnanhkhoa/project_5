@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="default_padding">8dp</dimen>
+    <dimen name="sp_20">20sp</dimen>
+    <dimen name="dp_16">16dp</dimen>
+    <dimen name="sp_16">16sp</dimen>
+
+    <!-- TODO: Add necessary dimension values -->s
+
+</resources>
